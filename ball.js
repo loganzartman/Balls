@@ -17,10 +17,24 @@ Ball.prototype.stepDistance = function(pixels) {
 Ball.prototype.step = function(dt) {
 	this.collideAny(this.universe.getNear(this));
 	if (!this.holding) this.pos = this.pos.add(this.vel.mult(dt));
+	this.applyTethers();
 	this.boundsCheck(this.vel.mult(dt));
 	this.vel = this.vel.add(this.universe.gravity.mult(dt));
 	this.vel = this.vel.mult(1-(this.universe.airResistance*dt));
 	// this.restCheck();
+};
+Ball.prototype.applyTethers = function() {
+	var tethers = this.universe.getTethers(this);
+	for (var i=0; i<tethers.length; i++) {
+		var tether = tethers[i];
+		var dx = this.pos.sub(tether.pos);
+		var len = dx.len();
+		if (len > tether.len) {
+			var displacement = dx.unit().mult(len - tether.len);
+			this.pos = this.pos.sub(displacement);
+			this.vel = this.vel.sub(displacement);
+		}
+	}
 };
 Ball.prototype.boundsCheck = function(dpos) {
 	var dx0 = this.pos.x - this.r,
@@ -85,8 +99,19 @@ Ball.prototype.collide = function(ball) {
 	ball.vel = ball.vel.add(unitDisp.mult(bcf-bci).mult(ball.universe.ballRestitution));
 };
 Ball.prototype.draw = function(ctx,x,y) {
-	ctx.fillStyle = this.color;
-	ctx.beginPath();
-	ctx.arc(x,y,this.r,0,Math.PI*2);
-	ctx.fill();
+	if (!Ball.imageLoaded) return;
+	ctx.drawImage(Ball.image, x - Ball.image.width*0.5, y - Ball.image.height * 0.5, this.r*2, this.r*2);
 };
+
+(function(){
+	var img = new Image();
+	img.onload = function(){
+		Ball.image = document.createElement("canvas");
+		Ball.image.width = BALL_RADIUS*2;
+		Ball.image.height = BALL_RADIUS*2;
+		var ctx = Ball.image.getContext("2d");
+		ctx.drawImage(img, 0, 0, Ball.image.width, Ball.image.height);
+		Ball.imageLoaded = true;
+	};
+	img.src = "ball.svg";
+})();

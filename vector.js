@@ -43,3 +43,4 @@ Vector.prototype.normalize = function() {
 	if (len === 0) return new Vector(0,0);
 	return new Vector(this.x / len, this.y / len);
 };
+Vector.prototype.unit = Vector.prototype.normalize;

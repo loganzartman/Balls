@@ -1,9 +1,10 @@
 var Universe = function(w,h,canvas,rgb) {
 	this.balls = [];
-	this.gravity = new Vector(0, 0);
-	this.ballRestitution = 0.99;
+	this.tethers = [];
+	this.gravity = new Vector(0, 1);
+	this.ballRestitution = 0.999;
 	this.edgeRestitution = 1.0;
-	this.airResistance = 0.01; //or rolling friction
+	this.airResistance = 0.0005; //or rolling friction
 	this.minVel = 0.01;
 	this.minStepSize = 1e-4;
 	this.w = w;
@@ -30,11 +31,25 @@ var Universe = function(w,h,canvas,rgb) {
 		volume: 0.3
 	});
 };
+Universe.prototype.createTether = function(ball, position, length, softness) {
+	var tether = {
+		ball: ball,
+		pos: position,
+		len: length,
+		softness: softness
+	};
+	return this.tethers.push(tether);
+};
 Universe.prototype.add = function(ball) {
 	if (this.balls.indexOf(ball) < 0) this.balls.push(ball);
 };
 Universe.prototype.getNear = function(ball) {
 	return this.balls; //todo
+};
+Universe.prototype.getTethers = function(ball) {
+	return this.tethers.filter(function(tether){
+		return tether.ball === ball;
+	});
 };
 Universe.prototype.step = function(dt) {
 	if (this.balls.length > 0) {
@@ -57,8 +72,9 @@ Universe.prototype.step = function(dt) {
 
 		// for (var i=this.balls.length-1; i>=0; i--) {
 		// 	if (this.balls[i]._collided[0]) {
-		// 		this.soundBump.volume = this.balls[i]._collided[0];
-		// 		this.soundBump.play("bump");
+		// 		//this.balls[i]._collided[0];
+		// 		var id = this.soundBump.play("bump");
+		// 		this.soundBump.volume(0.001, id);
 		// 		this.balls[i]._collided[0] = false;
 		// 	}
 		// 	if (this.balls[i]._collided[1]) {
@@ -74,6 +90,15 @@ Universe.prototype.step = function(dt) {
 Universe.prototype.draw = function() {
 	this.ctx.fillStyle = this.color;
 	this.ctx.fillRect(0,0,this.canvas.width,this.canvas.height);
+	for (var i=0; i<this.tethers.length; i++) {
+		var tether = this.tethers[i];
+		this.ctx.lineWidth = 1;
+		this.ctx.strokeStyle = "white";
+		this.ctx.beginPath();
+		this.ctx.moveTo(tether.pos.x, tether.pos.y);
+		this.ctx.lineTo(tether.ball.pos.x, tether.ball.pos.y);
+		this.ctx.stroke();
+	}
 	for (var i=this.balls.length-1; i>=0; i--) {
 		var len = this.balls[i].vel.len();
 		var blurStep = this.balls[i].vel.normalize().mult(len/this._blurSteps);

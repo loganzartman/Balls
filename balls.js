@@ -1,13 +1,13 @@
 var canvas, universe;
 var Mouse = {x:0, y:0, startX:0, startY:0, down:false, grabbed: null, gOffset: null};
-var BALL_RADIUS = 30;
+var BALL_RADIUS = 50;
 
 window.addEventListener("load", function(){
 	canvas = document.getElementById("display");
 	canvas.width = window.innerWidth;
 	canvas.height = window.innerHeight;
 	document.body.appendChild(canvas);
-	universe = new Universe(canvas.width, canvas.height, canvas, [50,80,30]);
+	universe = new Universe(canvas.width, canvas.height, canvas, [60,60,60]);
 	setInterval(function(){
 		//these events need to be synced with universe stepping
 		if (Mouse.up) {
@@ -30,6 +30,9 @@ window.addEventListener("load", function(){
 			var lpos = Mouse.grabbed.pos.clone();
 			Mouse.grabbed.pos = new Vector(Mouse.x, Mouse.y).add(Mouse.gOffset);
 			Mouse.grabbed.vel = Mouse.grabbed.pos.sub(lpos);
+			Mouse.grabbed.applyTethers();
+			var vy = Mouse.grabbed.vel.y;
+			Mouse.grabbed.vel.y = Math.max(1e-3,Math.abs(vy))*(Math.sign(vy)||1);
 		}
 	}, 1000/60);
 
@@ -93,7 +96,27 @@ window.addEventListener("load", function(){
 
 function resetGame() {
 	universe.balls = [];
-	makeTriangle(new Vector(universe.w*0.7, universe.h*0.5), 5);
+	universe.tethers = []
+	var N = 7;
+	var x0 = universe.w*0.5-BALL_RADIUS*N,
+		y0 = universe.h * 0.7;
+	for (var i=0; i<N; i++) {
+		var ball = new Ball(
+			universe,
+			new Vector(x0 + BALL_RADIUS*i*2, y0),
+			BALL_RADIUS,
+			1,
+			new Vector(0, 0),
+			"white"
+		);
+		universe.createTether(
+			ball,
+			ball.pos.sub(new Vector(0, universe.h*0.5)),
+			universe.h * 0.5,
+			1
+		);
+		universe.add(ball);
+	}
 }
 
 function makeTriangle(basePos, depth) {
