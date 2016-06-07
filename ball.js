@@ -43,22 +43,22 @@ Ball.prototype.boundsCheck = function(dpos) {
 		dy1 = (this.universe.h - this.r) - this.pos.y;
 	if (dx0 < 0) {
 		this._collided[0] = Math.min(1,(-dx0)/20);
-		this.pos.x -= dx0 + (dpos.x + dx0);
+		this.pos.x = this.r;
 		this.vel.x = -this.vel.x*this.universe.edgeRestitution;
 	}
 	if (dx1 < 0) {
 		this._collided[0] = true;
-		this.pos.x += dx1 + Math.min(1,(-dx1)/20);
+		this.pos.x = this.universe.w-this.r;
 		this.vel.x = -this.vel.x*this.universe.edgeRestitution;
 	}
 	if (dy0 < 0) {
 		this._collided[0] = true;
-		this.pos.y -= dy0 + Math.min(1,(-dy0)/20);
+		this.pos.y = this.r;
 		this.vel.y = -this.vel.y*this.universe.edgeRestitution;
 	}
 	if (dy1 < 0) {
 		this._collided[0] = true;
-		this.pos.y += dy1 + Math.min(1,(-dy1)/20);
+		this.pos.y = this.universe.h-this.r;
 		this.vel.y = -this.vel.y*this.universe.edgeRestitution;
 	}
 };
@@ -80,7 +80,7 @@ Ball.prototype.collide = function(ball) {
 	var displacement = this.pos.sub(ball.pos);
 	if (displacement.len() === 0) throw new Error("d0");
 
-	var overlap = displacement.len() - (this.r + ball.r);
+	var overlap = (displacement.len() - (this.r + ball.r)) * this.universe.ballSoftness;
 	this.pos = this.pos.sub(displacement.normalize().mult(overlap*0.5));
 	ball.pos = ball.pos.add(displacement.normalize().mult(overlap*0.5));
 	
@@ -100,6 +100,16 @@ Ball.prototype.collide = function(ball) {
 };
 Ball.prototype.draw = function(ctx,x,y) {
 	if (!Ball.imageLoaded) return;
+	for (var i=0; i<this.universe.tethers.length; i++) {
+		var tether = this.universe.tethers[i];
+		if (tether.ball !== this) continue;
+		ctx.lineWidth = 1;
+		ctx.strokeStyle = "white";
+		ctx.beginPath();
+		ctx.moveTo(tether.pos.x, tether.pos.y);
+		ctx.lineTo(x, y);
+		ctx.stroke();
+	}
 	ctx.drawImage(Ball.image, x - Ball.image.width*0.5, y - Ball.image.height * 0.5, this.r*2, this.r*2);
 };
 

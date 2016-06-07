@@ -2,9 +2,10 @@ var Universe = function(w,h,canvas,rgb) {
 	this.balls = [];
 	this.tethers = [];
 	this.gravity = new Vector(0, 1);
-	this.ballRestitution = 0.999;
-	this.edgeRestitution = 1.0;
-	this.airResistance = 0.0005; //or rolling friction
+	this.ballSoftness = 1.0;
+	this.ballRestitution = 1.0;
+	this.edgeRestitution = 0.7;
+	this.airResistance = 0.0; //or rolling friction
 	this.minVel = 0.01;
 	this.minStepSize = 1e-4;
 	this.w = w;
@@ -14,7 +15,7 @@ var Universe = function(w,h,canvas,rgb) {
 	this.color = this.ctx.createRadialGradient(this.w*0.5,this.h*0.4,0,this.w*0.5,this.h*0.4,Math.max(this.w*0.5,this.h*0.5));
 	this.color.addColorStop(0, "rgb("+rgb[0]+","+rgb[1]+","+rgb[2]+")");
 	this.color.addColorStop(1, "rgb("+(rgb[0]-30)+","+(rgb[1]-30)+","+(rgb[2]-30)+")");
-	this._blurSteps = 12;
+	this._blurSteps = 8;
 	this.resolveSteps = 1;
 	this.soundHit = new Howl({
 		urls: ["hit_r.wav"],
@@ -90,22 +91,13 @@ Universe.prototype.step = function(dt) {
 Universe.prototype.draw = function() {
 	this.ctx.fillStyle = this.color;
 	this.ctx.fillRect(0,0,this.canvas.width,this.canvas.height);
-	for (var i=0; i<this.tethers.length; i++) {
-		var tether = this.tethers[i];
-		this.ctx.lineWidth = 1;
-		this.ctx.strokeStyle = "white";
-		this.ctx.beginPath();
-		this.ctx.moveTo(tether.pos.x, tether.pos.y);
-		this.ctx.lineTo(tether.ball.pos.x, tether.ball.pos.y);
-		this.ctx.stroke();
-	}
 	for (var i=this.balls.length-1; i>=0; i--) {
 		var len = this.balls[i].vel.len();
 		var blurStep = this.balls[i].vel.normalize().mult(len/this._blurSteps);
 		var dx = blurStep.x,
 			dy = blurStep.y;
 		var steps = Math.min(~~len, this._blurSteps);
-		this.ctx.globalAlpha = 1/(steps)+0.1;
+		this.ctx.globalAlpha = 1/(steps-1);
 		for (var z=-steps; z<=0; z++) {
 			this.balls[i].draw(this.ctx, this.balls[i].pos.x+dx*z, this.balls[i].pos.y+dy*z);
 		}

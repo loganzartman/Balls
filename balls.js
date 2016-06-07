@@ -98,7 +98,7 @@ function resetGame() {
 	universe.balls = [];
 	universe.tethers = []
 	var N = 7;
-	var x0 = universe.w*0.5-BALL_RADIUS*N,
+	var x0 = universe.w*0.5-BALL_RADIUS*(N-1),
 		y0 = universe.h * 0.7;
 	for (var i=0; i<N; i++) {
 		var ball = new Ball(
@@ -165,6 +165,7 @@ function launchBall(ball) {
 		universe.add(ball);
 	}
 	else ball.vel = dpos;
+	return ball;
 }
 
 function rand(a,b) {
